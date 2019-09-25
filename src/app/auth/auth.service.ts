@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, tap } from 'rxjs/operators';
-import { throwError, BehaviorSubject } from 'rxjs';
+import { throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { environment } from '../../environments/environment';
@@ -23,31 +23,31 @@ export interface AuthResponseData{
 @Injectable({providedIn: 'root'})
 export class AuthService{
 
-    //user = new BehaviorSubject<User>(null);
     private tokenExpirationTimer: any;
 
     constructor(private http: HttpClient, private router: Router, private store: Store<fromApp.AppState>){}
 
     signup(email: string, password: string){
         return this.http
-        .post<AuthResponseData>(
-            'https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=' + environment.fireBaseAPIKey,
-        {
-            email: email,
-            password: password,
-            returnSecureToken: true
-        })
-        .pipe(
-            catchError(this.handleError),
-            tap(resData => {
-                this.handleAuthentication(
-                    resData.email,
-                    resData.localId,
-                    resData.idToken,
-                    +resData.expiresIn
-                );
+            .post<AuthResponseData>(
+            'https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=' + 
+                environment.fireBaseAPIKey,
+            {
+                email: email,
+                password: password,
+                returnSecureToken: true
             })
-        );
+            .pipe(
+                catchError(this.handleError),
+                tap(resData => {
+                    this.handleAuthentication(
+                        resData.email,
+                        resData.localId,
+                        resData.idToken,
+                        +resData.expiresIn
+                    );
+                })
+            );
     }
 
     login(email: string, password: string){
@@ -92,9 +92,9 @@ export class AuthService{
         if(loadedUser.token){
             //this.user.next(loadedUser);
             this.store.dispatch(
-                new AuthActions.Login({
+                new AuthActions.AuthenticateSuccess({
                     email: loadedUser.email,
-                    user: loadedUser.id,
+                    userId: loadedUser.id,
                     token: loadedUser.token,
                     expirationDate: new Date(userData._tokenExpirationDate)
                 })
@@ -128,9 +128,9 @@ export class AuthService{
         const user = new User(email, userId, token, expirationDate);
         //this.user.next(user);
         this.store.dispatch(
-            new AuthActions.Login({
+            new AuthActions.AuthenticateSuccess({
                 email: email,
-                user: userId,
+                userId: userId,
                 token: token,
                 expirationDate: expirationDate
             })
