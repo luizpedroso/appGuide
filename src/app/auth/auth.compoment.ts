@@ -23,6 +23,7 @@ export class AuthComponent implements OnInit, OnDestroy{
     @ViewChild(PlaceHolderDirective, {static: true} ) alertHost: PlaceHolderDirective;
 
     private closeSub: Subscription;
+    private storeSub: Subscription;
 
     constructor(
         private authService: AuthService,  
@@ -32,7 +33,7 @@ export class AuthComponent implements OnInit, OnDestroy{
     ){}
 
     ngOnInit(){
-        this.store.select('auth').subscribe(authState => {
+        this.storeSub = this.store.select('auth').subscribe(authState => {
             this.isLoading = authState.loading;
             this.error = authState.authError;
             if(this.error){
@@ -53,7 +54,7 @@ export class AuthComponent implements OnInit, OnDestroy{
         const password = form.value.password;
 
         if (this.isLoginMode) {
-            //authObs = this.authService.login(email, password);
+            console.log("entrei login");
             this.store.dispatch(
                 new AuthActions.LoginStart({ email: email, password: password})
             );
@@ -67,12 +68,15 @@ export class AuthComponent implements OnInit, OnDestroy{
     }
 
     onHandlerError(){
-        this.error = null;
+        this.store.dispatch(new AuthActions.ClearError());
     }
 
     ngOnDestroy(){
         if(this.closeSub){
             this.closeSub.unsubscribe();
+        }
+        if(this.storeSub){
+            this.storeSub.unsubscribe();
         }
     }
 
